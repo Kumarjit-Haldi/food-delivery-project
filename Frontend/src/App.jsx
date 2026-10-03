@@ -1,4 +1,10 @@
-import { BrowserRouter,Routes,Route } from "react-router-dom";
+import {
+  BrowserRouter,
+   Routes,
+  Route,
+  useLocation
+} from "react-router-dom";
+
 import Products from "./components/Products";
 import Home from "./components/Home";
 import SearchBar from "./components/SearchBar";
@@ -14,30 +20,88 @@ import AdminDashboard from "./components/AdminDasboard";
 import ViewFood from "./components/ViewFood";
 import Checkout from "./components/Checkout";
 import AdminOrders from "./components/AdminOrders";
+import AdminRoute from "./components/AdminRoute";
 
 
+const Layout = () => {
+  const location = useLocation();
 
-const App =()=>{
-  return<>
-  <BrowserRouter>
-  <Navbar/>
-  <Routes>
-    <Route path="/home" element={<Home/>}></Route>
-    <Route path="/products" element={<Products/>}></Route>
-    <Route path="/search" element={<SearchBar/>}></Route>
-    <Route path="/cart" element={<Cart/>}></Route>
-    <Route path="/orders" element={<Orders/>}></Route>
-    <Route path="/login" element={<Login/>}></Route>
-    <Route path="/register" element={<Register/>}></Route>
-    <Route path="/about" element={<About />} />
-    <Route path="/addfood" element={<AddFood />} />
-    <Route path="/admin" element={<AdminDashboard />} />
-    <Route path="/view" element={<ViewFood />} />
-    <Route path="/checkout" element={<Checkout />} />
-    <Route path="/admin/orders" element={<AdminOrders />} />
-  </Routes>
-  <Footer/>
-  </BrowserRouter>
-  </>
-}
+  const isAdminRoute =
+    location.pathname === "/admin" ||
+    location.pathname === "/admin/orders" ||
+    location.pathname === "/addfood" ||
+    location.pathname === "/view";
+
+  return (
+    <>
+      {/* User Navbar */}
+      {!isAdminRoute && <Navbar />}
+
+      <Routes>
+
+        {/* User Routes */}
+        <Route path="/home" element={<Home />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/search" element={<SearchBar />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/checkout" element={<Checkout />} />
+
+        {/* Protected Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/addfood"
+          element={
+            <AdminRoute>
+              <AddFood />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/view"
+          element={
+            <AdminRoute>
+              <ViewFood />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/orders"
+          element={
+            <AdminRoute>
+              <AdminOrders />
+            </AdminRoute>
+          }
+        />
+
+      </Routes>
+
+      {/* User Footer */}
+      {!isAdminRoute && <Footer />}
+    </>
+  );
+};
+
+
+const App = () => {
+  return (
+    <BrowserRouter>
+      <Layout />
+    </BrowserRouter>
+  );
+};
+
 export default App;

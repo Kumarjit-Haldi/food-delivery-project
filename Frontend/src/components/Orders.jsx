@@ -7,22 +7,44 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
-    const getOrders = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:5900/api/orders"
-        );
+  const getOrders = async () => {
+    try {
+      const token = localStorage.getItem("foodnest-token");
 
-        setOrders(response.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+      if (!token) {
+        alert("Please login first");
+        return;
       }
-    };
 
-    getOrders();
-  }, []);
+      const response = await axios.get(
+        "http://localhost:5900/api/orders/my-orders",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setOrders(response.data);
+
+    } catch (err) {
+      console.error(err);
+
+      if (err.response?.status === 401) {
+        localStorage.removeItem("foodnest-token");
+        localStorage.removeItem("foodnest-user");
+
+        alert("Session expired. Please login again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  getOrders();
+}, []);
+
+      
 
   if (loading) {
     return (

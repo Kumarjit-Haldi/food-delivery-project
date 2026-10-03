@@ -1,10 +1,15 @@
-import React, { useEffect,useState } from "react";
-import { NavLink, Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-    const [cartCount, setCartCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
+  const [currentUser, setCurrentUser] = useState(null);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // ---------------- CART COUNT ----------------
   const updateCartCount = () => {
     const savedCart = localStorage.getItem("foodnest-cart");
 
@@ -22,8 +27,20 @@ const Navbar = () => {
     }
   };
 
+  // ---------------- LOGIN USER ----------------
+  const updateUser = () => {
+    const savedUser = localStorage.getItem("foodnest-user");
+
+    if (savedUser) {
+      setCurrentUser(JSON.parse(savedUser));
+    } else {
+      setCurrentUser(null);
+    }
+  };
+
   useEffect(() => {
     updateCartCount();
+    updateUser();
 
     window.addEventListener("cartUpdated", updateCartCount);
 
@@ -31,6 +48,22 @@ const Navbar = () => {
       window.removeEventListener("cartUpdated", updateCartCount);
     };
   }, []);
+
+  // URL change হলে user information আবার check করবে
+  useEffect(() => {
+    updateUser();
+  }, [location.pathname]);
+
+  // ---------------- LOGOUT ----------------
+  const handleLogout = () => {
+    localStorage.removeItem("foodnest-token");
+    localStorage.removeItem("foodnest-user");
+
+    setCurrentUser(null);
+    setIsOpen(false);
+
+    navigate("/login");
+  };
 
   const navItems = [
     { name: "Home", path: "/home" },
@@ -93,7 +126,6 @@ const Navbar = () => {
           </div>
         </Link>
 
-
         {/* Desktop Menu */}
         <div className="hidden items-center gap-2 md:flex">
 
@@ -108,7 +140,6 @@ const Navbar = () => {
               <span className="absolute bottom-0 left-3 h-[2px] w-0 rounded-full bg-orange-500 transition-all duration-300 group-hover:w-[calc(100%-24px)]" />
             </NavLink>
           ))}
-
 
           {/* Cart */}
           <NavLink
@@ -144,29 +175,61 @@ const Navbar = () => {
             </span>
           </NavLink>
 
-
-          {/* Login + Register */}
+          {/* User / Login */}
           <div className="ml-3 flex items-center gap-2">
 
-            {/* Login */}
-            <Link
-              to="/login"
-              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all duration-300 hover:bg-gray-100 hover:text-orange-500"
-            >
-              Login
-            </Link>
+            {currentUser ? (
+              <>
+                {/* User Name */}
+                <div className="flex items-center gap-2 rounded-xl bg-orange-50 px-4 py-2.5 text-sm font-semibold text-orange-600">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
+                    {currentUser.name?.charAt(0).toUpperCase()}
+                  </div>
 
-            {/* Register */}
-            <Link
-              to="/register"
-              className="rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-orange-300"
-            >
-              Register
-            </Link>
+                  <span className="max-w-[120px] truncate">
+                    {currentUser.name}
+                  </span>
+                </div>
+                {/* Admin Dashboard */}
+                 {currentUser?.role === "admin" && (
+                <Link
+                 to="/admin"
+                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-orange-500 transition-all duration-300 hover:bg-orange-50"
+               >
+                 Admin Dashboard
+                 </Link>
+                  )}
+
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all duration-300 hover:bg-red-50 hover:text-red-500"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Login */}
+                <Link
+                  to="/login"
+                  className="rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all duration-300 hover:bg-gray-100 hover:text-orange-500"
+                >
+                  Login
+                </Link>
+
+                {/* Register */}
+                <Link
+                  to="/register"
+                  className="rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-orange-300"
+                >
+                  Register
+                </Link>
+              </>
+            )}
 
           </div>
         </div>
-
 
         {/* Mobile Menu Button */}
         <button
@@ -205,12 +268,11 @@ const Navbar = () => {
         </button>
       </div>
 
-
       {/* Mobile Menu */}
       <div
         className={`overflow-hidden border-t border-gray-100 bg-white transition-all duration-300 md:hidden ${
           isOpen
-            ? "max-h-[500px] opacity-100"
+            ? "max-h-[600px] opacity-100"
             : "max-h-0 opacity-0"
         }`}
       >
@@ -233,7 +295,6 @@ const Navbar = () => {
             </NavLink>
           ))}
 
-
           {/* Mobile Cart */}
           <NavLink
             to="/cart"
@@ -247,25 +308,63 @@ const Navbar = () => {
             </span>
           </NavLink>
 
+          {/* Mobile User */}
+          {currentUser ? (
+            <>
+              <div className="flex items-center gap-3 rounded-xl bg-orange-50 px-4 py-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white">
+                  {currentUser.name?.charAt(0).toUpperCase()}
+                </div>
 
-          {/* Mobile Login */}
-          <Link
-            to="/login"
-            onClick={() => setIsOpen(false)}
-            className="block rounded-xl border border-gray-200 px-4 py-3 text-center text-sm font-bold text-gray-700 transition-all duration-300 hover:border-orange-300 hover:text-orange-500"
-          >
-            Login
-          </Link>
+                <div>
+                  <p className="text-xs text-gray-400">
+                    Logged in as
+                  </p>
 
+                  <p className="text-sm font-bold text-gray-800">
+                    {currentUser.name}
+                  </p>
+                </div>
+              </div>
+              {/* Mobile Admin Dashboard */}
+            {currentUser?.role === "admin" && (
+            <Link
+             to="/admin"
+           onClick={() => setIsOpen(false)}
+             className="block rounded-xl border border-orange-200 px-4 py-3 text-center text-sm font-bold text-orange-500 transition-all duration-300 hover:bg-orange-50"
+                 >
+             Admin Dashboard
+             </Link>
+              )}
+              {/* Mobile Logout */}
+              <button
+                onClick={handleLogout}
+                className="block w-full rounded-xl border border-red-200 px-4 py-3 text-center text-sm font-bold text-red-500 transition-all duration-300 hover:bg-red-50"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Mobile Login */}
+              <Link
+                to="/login"
+                onClick={() => setIsOpen(false)}
+                className="block rounded-xl border border-gray-200 px-4 py-3 text-center text-sm font-bold text-gray-700 transition-all duration-300 hover:border-orange-300 hover:text-orange-500"
+              >
+                Login
+              </Link>
 
-          {/* Mobile Register */}
-          <Link
-            to="/register"
-            onClick={() => setIsOpen(false)}
-            className="block rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-bold text-white shadow-md shadow-orange-200 transition-all duration-300 hover:bg-orange-600"
-          >
-            Create Account
-          </Link>
+              {/* Mobile Register */}
+              <Link
+                to="/register"
+                onClick={() => setIsOpen(false)}
+                className="block rounded-xl bg-orange-500 px-4 py-3 text-center text-sm font-bold text-white shadow-md shadow-orange-200 transition-all duration-300 hover:bg-orange-600"
+              >
+                Create Account
+              </Link>
+            </>
+          )}
 
         </div>
       </div>

@@ -56,17 +56,34 @@ const Checkout = () => {
     try {
 
       // Create separate order for each food
-      for (const item of cart) {
+      const savedUser = localStorage.getItem("foodnest-user");
+const savedToken = localStorage.getItem("foodnest-token");
 
-        await axios.post("http://localhost:5900/api/orders", {
-          name: name.trim(),
-          food: item.name,
-          quantity: item.quantity,
-          price: item.price * item.quantity
-        });
+if (!savedUser || !savedToken) {
+  alert("Please login first");
+  navigate("/login");
+  return;
+}
 
+const user = JSON.parse(savedUser);
+
+for (const item of cart) {
+  await axios.post(
+    "http://localhost:5900/api/orders",
+    {
+      name: name.trim(),
+      food: item.name,
+      quantity: item.quantity,
+      price: item.price * item.quantity,
+      userId: user.id
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${savedToken}`
       }
-
+    }
+  );
+}
       alert("Order placed successfully! 🎉");
 
       // Empty cart

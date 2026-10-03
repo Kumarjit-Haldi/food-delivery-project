@@ -1,10 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+dotenv.config();
 const connectdb = require("./config/db");
 const orderroutes = require("./routes/orderroutes");
 const foodroutes = require("./routes/foodroutes");
-dotenv.config();
+const authroutes = require("./routes/authroutes");
+
 
 const app = express();
 app.use(cors());
@@ -15,8 +17,9 @@ app.get('/', (req,res)=>{
 });
 app.use("/api/orders",orderroutes);
 app.use("/api/foods", foodroutes);
-const port = process.env.port;
+app.use("/api/auth", authroutes);
+const port = process.env.port ||5900;
 
 app.listen(port,()=>{
-    console.log("server is running port 5900")
+    console.log(`server is running port ${port}`);
 });

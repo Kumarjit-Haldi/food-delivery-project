@@ -6,6 +6,12 @@ const orderschema = new mongoose.Schema({
     food:{type:String, required:true},
     quantity:{type:Number, required:true,min:1},
     price:{type:Number, required:true},
+    //login kora user ID 
+    userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+    required: true
+  },
     status: {
     type: String,
     enum: ["Placed", "Preparing", "Out for Delivery", "Delivered"],

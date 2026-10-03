@@ -7,10 +7,16 @@ const AdminOrders = () => {
 
   const getOrders = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5900/api/orders"
-      );
+      const token = localStorage.getItem("foodnest-token");
 
+const response = await axios.get(
+  "http://localhost:5900/api/orders",
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
       setOrders(response.data);
     } catch (err) {
       console.error(err);
@@ -29,7 +35,12 @@ const AdminOrders = () => {
         `http://localhost:5900/api/orders/${id}`,
         {
           status: newStatus,
-        }
+        },
+        {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
       );
 
       setOrders((prevOrders) =>
@@ -53,8 +64,15 @@ const AdminOrders = () => {
     if (!confirmDelete) return;
 
     try {
+      const token = localStorage.getItem("foodnest-token");
+
       await axios.delete(
-        `http://localhost:5900/api/orders/${id}`
+        `http://localhost:5900/api/orders/${id}`,
+         {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
       );
 
       setOrders((prevOrders) =>
