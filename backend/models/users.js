@@ -21,6 +21,16 @@ const userschema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  
+ verificationotp: {
+  type: String
+  },
+
+  verificationotpexpires: {
+  type: Date
+  },
+
+ 
   role: {
   type: String,
   enum: ["user", "admin"],

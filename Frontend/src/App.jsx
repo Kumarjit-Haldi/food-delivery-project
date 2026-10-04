@@ -21,6 +21,8 @@ import ViewFood from "./components/ViewFood";
 import Checkout from "./components/Checkout";
 import AdminOrders from "./components/AdminOrders";
 import AdminRoute from "./components/AdminRoute";
+import VerifyOTP from "./components/VerifyOTP";
+import AIRecommendations from "./components/AIRecommendations";
 
 
 const Layout = () => {
@@ -49,7 +51,8 @@ const Layout = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/about" element={<About />} />
         <Route path="/checkout" element={<Checkout />} />
-
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/ai" element={<AIRecommendations />} />
         {/* Protected Admin Routes */}
         <Route
           path="/admin"

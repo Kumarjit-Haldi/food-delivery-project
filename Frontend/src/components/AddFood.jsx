@@ -14,12 +14,22 @@ const AddFood = () => {
     e.preventDefault();
 
     try {
-      await axios.post("http://localhost:5900/api/foods", {
-        name: name.trim(),
-        price: Number(price),
-        description: description.trim(),
-        image: image.trim(),
-      });
+      const token = localStorage.getItem("foodnest-token");
+
+await axios.post(
+  "http://localhost:5900/api/foods",
+  {
+    name: name.trim(),
+    price: Number(price),
+    description: description.trim(),
+    image: image.trim(),
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
       alert("Food added successfully");
       navigate("/view");

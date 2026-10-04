@@ -1,6 +1,96 @@
-import React from 'react'
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useSearchParams } from "react-router-dom";
 
 const SearchBar = () => {
+  const [searchParams] = useSearchParams();
+
+  const [searchTerm, setSearchTerm] = useState("");
+const [foods, setFoods] = useState([]);
+const [filteredFoods, setFilteredFoods] = useState([]);
+
+useEffect(() => {
+  const fetchFoods = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:5900/api/foods"
+      );
+
+      setFoods(response.data);
+    } catch (err) {
+      console.error("Failed to fetch foods", err);
+    }
+  };
+
+  fetchFoods();
+}, []);
+useEffect(() => {
+  const query = searchParams.get("query");
+
+  if (!query || foods.length === 0) {
+    return;
+  }
+
+  setSearchTerm(query);
+
+  const result = foods.filter((item) =>
+    item.name.toLowerCase().includes(query.toLowerCase())
+  );
+
+  setFilteredFoods(result);
+}, [searchParams, foods]);
+
+const handleSearch = () => {
+  const result = foods.filter((item) =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
+  );
+
+  setFilteredFoods(result);
+};
+const searchByKeyword = (keyword) => {
+  setSearchTerm(keyword);
+
+  const result = foods.filter((item) =>
+    item.name.toLowerCase().includes(keyword.toLowerCase())
+  );
+
+  setFilteredFoods(result);
+};
+const addToCart = (food) => {
+  const savedCart = localStorage.getItem("foodnest-cart");
+  const cart = savedCart ? JSON.parse(savedCart) : [];
+
+  const existingFood = cart.find(
+    (item) => item._id === food._id
+  );
+
+  let updatedCart;
+
+  if (existingFood) {
+    updatedCart = cart.map((item) =>
+      item._id === food._id
+        ? { ...item, quantity: item.quantity + 1 }
+        : item
+    );
+  } else {
+    updatedCart = [
+      ...cart,
+      {
+        ...food,
+        quantity: 1,
+      },
+    ];
+  }
+
+  localStorage.setItem(
+    "foodnest-cart",
+    JSON.stringify(updatedCart)
+  );
+
+  window.dispatchEvent(new Event("cartUpdated"));
+
+  alert(`${food.name} added to cart`);
+};
   return (
     <div className="min-h-screen bg-slate-50">
 
@@ -62,15 +152,18 @@ const SearchBar = () => {
                   </span>
 
                   <input
-                    type="text"
-                    placeholder="Search burgers, pizza, biryani..."
-                    className="w-full bg-transparent outline-none text-white placeholder-gray-500 text-lg"
-                  />
+  type="text"
+  placeholder="Search burgers, pizza, biryani..."
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  className="w-full bg-transparent outline-none text-white placeholder-gray-500 text-lg"
+/>
 
                 </div>
 
                 {/* Search Button */}
-                <button className="px-8 py-4 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 font-bold text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 hover:-translate-y-1 hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                <button onClick={handleSearch}
+                className="px-8 py-4 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 font-bold text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 hover:-translate-y-1 hover:scale-[1.02] active:scale-95 transition-all duration-300">
                   Search →
                 </button>
 
@@ -85,19 +178,21 @@ const SearchBar = () => {
                 Popular:
               </span>
 
-              <button className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 text-sm hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/30 transition-all duration-300">
+              <button onClick={() => searchByKeyword("Burger")}
+              className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 text-sm hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/30 transition-all duration-300">
                 🍔 Burger
               </button>
 
-              <button className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 text-sm hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/30 transition-all duration-300">
+              <button onClick={() => searchByKeyword("Pizza")}
+              className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 text-sm hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/30 transition-all duration-300">
                 🍕 Pizza
               </button>
 
-              <button className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 text-sm hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/30 transition-all duration-300">
+              <button onClick={() => searchByKeyword("Biryani")} className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 text-sm hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/30 transition-all duration-300">
                 🍗 Biryani
               </button>
 
-              <button className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 text-sm hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/30 transition-all duration-300">
+              <button onClick={() => searchByKeyword("Pasta")} className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-gray-400 text-sm hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/30 transition-all duration-300">
                 🍝 Pasta
               </button>
 
@@ -110,6 +205,70 @@ const SearchBar = () => {
 
 
       {/* CATEGORIES */}
+      {searchTerm.trim() && filteredFoods.length === 0 && (
+  <section className="max-w-7xl mx-auto px-6 py-16">
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-lg p-10 text-center">
+      <div className="text-6xl mb-5">🔍</div>
+
+      <h2 className="text-2xl font-bold text-gray-900">
+        No food found
+      </h2>
+
+      <p className="text-gray-500 mt-2">
+        We couldn't find any food matching "{searchTerm}".
+      </p>
+    </div>
+  </section>
+)}
+      {filteredFoods.length > 0 && (
+  <section className="max-w-7xl mx-auto px-6 py-16">
+    <div className="mb-8">
+      <p className="text-orange-500 font-semibold uppercase tracking-widest text-sm">
+        Search Results
+      </p>
+
+      <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-2">
+        Foods found for "{searchTerm}"
+      </h2>
+    </div>
+
+    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {filteredFoods.map((item) => (
+        <div
+          key={item._id}
+          className="bg-white rounded-3xl border border-gray-100 shadow-lg overflow-hidden hover:-translate-y-2 hover:shadow-2xl transition-all duration-300"
+        >
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-48 object-cover"
+          />
+
+          <div className="p-5">
+            <h3 className="text-xl font-bold text-gray-900">
+              {item.name}
+            </h3>
+
+            <p className="text-gray-500 text-sm mt-2">
+              {item.description}
+            </p>
+
+            <p className="text-orange-500 text-xl font-extrabold mt-4">
+              ₹{item.price}
+            </p>
+            <button
+       type="button"
+         onClick={() => addToCart(item)}
+       className="w-full mt-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-300"
+         >
+       Add to Cart →
+         </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
       <section className="max-w-7xl mx-auto px-6 py-20">
 
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10">

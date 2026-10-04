@@ -5,6 +5,13 @@ const Products = () => {
   const [foods, setFoods] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Review
+  const [reviews, setReviews] = useState({});
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [rating, setRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+
   // Cart
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem("foodnest-cart");
@@ -26,48 +33,133 @@ const Products = () => {
     getFoods();
   }, []);
 
-  // Save cart in localStorage
-  useEffect(() => {
-  localStorage.setItem("foodnest-cart", JSON.stringify(cart));
+  // Fetch Reviews
+  const getReviews = async (foodId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5900/api/reviews/${foodId}`
+      );
 
-  window.dispatchEvent(new Event("cartUpdated"));
-}, [cart]);
+      setReviews((prev) => ({
+        ...prev,
+        [foodId]: response.data,
+      }));
+    } catch (err) {
+      console.error("Failed to fetch reviews:", err);
+    }
+  };
 
-  // Add to Cart
- const addToCart = (food) => {
-  const existingFood = cart.find(
-    (item) => item._id === food._id
-  );
+  // Submit Review
+  const submitReview = async () => {
+    if (!selectedFood) return;
 
-  let updatedCart;
+    if (!reviewText.trim()) {
+      alert("Please write a review");
+      return;
+    }
 
-  if (existingFood) {
-    updatedCart = cart.map((item) =>
-      item._id === food._id
-        ? { ...item, quantity: item.quantity + 1 }
-        : item
-    );
-  } else {
-    updatedCart = [
-      ...cart,
-      {
-        ...food,
-        quantity: 1,
-      },
-    ];
+    try {
+      setReviewLoading(true);
+
+      const token = localStorage.getItem("foodnest-token");
+
+      await axios.post(
+        "http://localhost:5900/api/reviews",
+        {
+          food: selectedFood._id,
+          rating: rating,
+          review: reviewText,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("Review added successfully!");
+
+      setReviewText("");
+      setRating(5);
+
+      await getReviews(selectedFood._id);
+
+      setSelectedFood(null);
+    } catch (err) {
+      console.error(err);
+
+      alert(
+        err.response?.data?.message ||
+          "Failed to add review"
+      );
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+// Calculate Average Rating
+const getAverageRating = (foodId) => {
+  const foodReviews = reviews[foodId] || [];
+
+  if (foodReviews.length === 0) {
+    return "4.8";
   }
 
-  setCart(updatedCart);
-
-  localStorage.setItem(
-    "foodnest-cart",
-    JSON.stringify(updatedCart)
+  const total = foodReviews.reduce(
+    (sum, item) => sum + item.rating,
+    0
   );
 
-  window.dispatchEvent(new Event("cartUpdated"));
-
-  alert(`${food.name} added to cart`);
+  return (total / foodReviews.length).toFixed(1);
 };
+  // Save cart in localStorage
+  useEffect(() => {
+    localStorage.setItem(
+      "foodnest-cart",
+      JSON.stringify(cart)
+    );
+
+    window.dispatchEvent(new Event("cartUpdated"));
+  }, [cart]);
+
+  // Add to Cart
+  const addToCart = (food) => {
+    const existingFood = cart.find(
+      (item) => item._id === food._id
+    );
+
+    let updatedCart;
+
+    if (existingFood) {
+      updatedCart = cart.map((item) =>
+        item._id === food._id
+          ? {
+              ...item,
+              quantity: item.quantity + 1,
+            }
+          : item
+      );
+    } else {
+      updatedCart = [
+        ...cart,
+        {
+          ...food,
+          quantity: 1,
+        },
+      ];
+    }
+
+    setCart(updatedCart);
+
+    localStorage.setItem(
+      "foodnest-cart",
+      JSON.stringify(updatedCart)
+    );
+
+    window.dispatchEvent(new Event("cartUpdated"));
+
+    alert(`${food.name} added to cart`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -101,7 +193,6 @@ const Products = () => {
 
       </section>
 
-
       {/* Products Section */}
       <section className="max-w-7xl mx-auto px-6 py-16">
 
@@ -123,14 +214,12 @@ const Products = () => {
 
         </div>
 
-
         {/* Loading */}
         {loading && (
           <div className="flex justify-center items-center py-20">
             <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
           </div>
         )}
-
 
         {/* Empty */}
         {!loading && foods.length === 0 && (
@@ -151,12 +240,11 @@ const Products = () => {
           </div>
         )}
 
-
         {/* Food Cards */}
         {!loading && foods.length > 0 && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
 
-            {foods.map(x => (
+            {foods.map((x) => (
 
               <ul
                 key={x._id}
@@ -184,7 +272,6 @@ const Products = () => {
 
                 </li>
 
-
                 {/* Card Content */}
                 <li className="list-none p-6">
 
@@ -195,21 +282,65 @@ const Products = () => {
                     </span>
 
                     <span className="text-sm text-gray-500">
-                      ⭐ 4.8
-                    </span>
-
+             ⭐ {getAverageRating(x._id)}
+                 </span>
                   </div>
 
+                  {/* Write Review */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFood(x);
+                      getReviews(x._id);
+                    }}
+                    className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    ⭐ Write a Review
+                  </button>
+                  {/* Reviews */}
+{reviews[x._id] && reviews[x._id].length > 0 && (
+  <div className="mt-4 rounded-2xl bg-gray-50 p-4">
 
-                  <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+    <p className="mb-3 text-sm font-bold text-gray-800">
+      Customer Reviews
+    </p>
+
+    <div className="space-y-3">
+      {reviews[x._id].slice(0, 2).map((item) => (
+        <div
+          key={item._id}
+          className="rounded-xl bg-white p-3 shadow-sm"
+        >
+          <div className="flex items-center justify-between">
+
+            <p className="text-sm font-semibold text-gray-800">
+              {item.user?.name || "FoodNest User"}
+            </p>
+
+            <span className="text-sm text-yellow-500">
+              {"★".repeat(item.rating)}
+            </span>
+
+          </div>
+
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            {item.review}
+          </p>
+
+            </div>
+           ))}
+             </div> 
+
+                  </div>
+                   )}
+
+                  <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300 mt-3">
                     {x.name}
                   </h3>
-
 
                   <p className="text-gray-500 text-sm mt-2 leading-6">
                     {x.description}
                   </p>
-
 
                   <div className="flex items-center justify-between mt-6">
 
@@ -222,7 +353,6 @@ const Products = () => {
                         ₹{x.price}
                       </p>
                     </div>
-
 
                     <button
                       type="button"
@@ -252,6 +382,94 @@ const Products = () => {
         )}
 
       </section>
+
+      {/* Review Modal */}
+      {selectedFood && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+
+            <div className="flex items-center justify-between">
+
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Write a Review
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  {selectedFood.name}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedFood(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+              >
+                ✕
+              </button>
+
+            </div>
+
+            {/* Rating */}
+            <div className="mt-6">
+
+              <p className="mb-3 text-sm font-semibold text-gray-700">
+                Your Rating
+              </p>
+
+              <div className="flex gap-2">
+
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className={`text-3xl transition-transform hover:scale-110 ${
+                      star <= rating
+                        ? "text-yellow-400"
+                        : "text-gray-300"
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+
+              </div>
+
+            </div>
+
+            {/* Review */}
+            <div className="mt-6">
+
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Your Review
+              </label>
+
+              <textarea
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Tell us about your food..."
+                rows="4"
+                className="w-full resize-none rounded-2xl border border-gray-200 p-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+
+            </div>
+
+            {/* Submit */}
+            <button
+              type="button"
+              onClick={submitReview}
+              disabled={reviewLoading}
+              className="mt-5 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 font-semibold text-white shadow-md transition hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {reviewLoading ? "Submitting..." : "Submit Review"}
+            </button>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );

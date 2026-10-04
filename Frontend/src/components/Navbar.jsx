@@ -69,6 +69,7 @@ const Navbar = () => {
     { name: "Home", path: "/home" },
     { name: "Menu", path: "/products" },
     { name: "Search", path: "/search" },
+    { name: "FoodNest AI", path: "/ai" },
     { name: "Orders", path: "/orders" },
   ];
 

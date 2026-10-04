@@ -29,32 +29,40 @@ const response = await axios.get(
     getOrders();
   }, []);
 
-  const updateStatus = async (id, newStatus) => {
-    try {
-      const response = await axios.put(
-        `http://localhost:5900/api/orders/${id}`,
-        {
-          status: newStatus,
-        },
-        {
+  
+     const updateStatus = async (id, newStatus) => {
+  try {
+    const token = localStorage.getItem("foodnest-token");
+
+    const response = await axios.put(
+      `http://localhost:5900/api/orders/${id}`,
+      {
+        status: newStatus,
+      },
+      {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }
-      );
+    );
 
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order._id === id ? response.data : order
-        )
-      );
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order._id === id ? response.data : order
+      )
+    );
 
-      alert("Order status updated successfully");
-    } catch (err) {
-      console.error(err);
+    alert("Order status updated successfully");
+  } catch (err) {
+    console.error("UPDATE STATUS ERROR:", err);
+
+    if (err.response?.data?.message) {
+      alert(err.response.data.message);
+    } else {
       alert("Failed to update order status");
     }
-  };
+  }
+};
 
   const deleteOrder = async (id) => {
     const confirmDelete = window.confirm(

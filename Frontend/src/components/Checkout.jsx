@@ -1,10 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const Checkout = () => {
 
   const navigate = useNavigate();
+  useEffect(() => {
+  const script = document.createElement("script");
+
+  script.src = "https://checkout.razorpay.com/v1/checkout.js";
+  script.async = true;
+
+  document.body.appendChild(script);
+
+  return () => {
+    document.body.removeChild(script);
+  };
+}, []);
 
   // Cart data
   const [cart] = useState(() => {
@@ -35,73 +47,171 @@ const Checkout = () => {
   );
 
   // Place Order
-  const placeOrder = async () => {
+ const placeOrder = async () => {
+  if (cart.length === 0) {
+    alert("Your cart is empty");
+    return;
+  }
 
-    if (cart.length === 0) {
-      alert("Your cart is empty");
+  if (
+    !name.trim() ||
+    !phone.trim() ||
+    !address.trim() ||
+    !city.trim() ||
+    !pincode.trim()
+  ) {
+    alert("Please fill all delivery details");
+    return;
+  }
+
+  try {
+    const savedUser = localStorage.getItem("foodnest-user");
+    const savedToken = localStorage.getItem("foodnest-token");
+
+    if (!savedUser || !savedToken) {
+      alert("Please login first");
+      navigate("/login");
       return;
     }
 
-    if (
-      !name.trim() ||
-      !phone.trim() ||
-      !address.trim() ||
-      !city.trim() ||
-      !pincode.trim()
-    ) {
-      alert("Please fill all delivery details");
-      return;
-    }
+    const user = JSON.parse(savedUser);
 
-    try {
-
-      // Create separate order for each food
-      const savedUser = localStorage.getItem("foodnest-user");
-const savedToken = localStorage.getItem("foodnest-token");
-
-if (!savedUser || !savedToken) {
-  alert("Please login first");
-  navigate("/login");
-  return;
-}
-
-const user = JSON.parse(savedUser);
-
-for (const item of cart) {
-  await axios.post(
-    "http://localhost:5900/api/orders",
-    {
-      name: name.trim(),
-      food: item.name,
-      quantity: item.quantity,
-      price: item.price * item.quantity,
-      userId: user.id
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${savedToken}`
+    // ==============================
+    // CASH ON DELIVERY
+    // ==============================
+    if (paymentMethod === "Cash on Delivery") {
+      for (const item of cart) {
+        await axios.post(
+          "http://localhost:5900/api/orders",
+          {
+            name: name.trim(),
+            food: item.name,
+            quantity: item.quantity,
+            price: item.price * item.quantity,
+            userId: user.id
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${savedToken}`
+            }
+          }
+        );
       }
-    }
-  );
-}
+
       alert("Order placed successfully! 🎉");
 
-      // Empty cart
       localStorage.removeItem("foodnest-cart");
-
-      // Update Navbar cart count
       window.dispatchEvent(new Event("cartUpdated"));
-
-      // Go to Orders page
       navigate("/orders");
 
-    } catch (err) {
-
-      console.error(err);
-      alert("Failed to place order");
-
+      return;
     }
-  };
+
+    // ==============================
+    // ONLINE PAYMENT - CREATE ORDER
+    // ==============================
+
+    if (!window.Razorpay) {
+      alert("Razorpay is still loading. Please try again.");
+      return;
+    }
+
+    const paymentResponse = await axios.post(
+      "http://localhost:5900/api/payment/create-order",
+      {
+        food: cart[0]._id,
+        amount: totalPrice
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${savedToken}`
+        }
+      }
+    );
+
+    const razorpayOrder = paymentResponse.data.order;
+    const razorpayKey = paymentResponse.data.key_id;
+
+    const options = {
+      key: razorpayKey,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      name: "FoodNest",
+      description: "Food Order Payment",
+      order_id: razorpayOrder.id,
+
+      handler: async function (response) {
+        try {
+          // Verify payment
+          await axios.post(
+            "http://localhost:5900/api/payment/verify-payment",
+            {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${savedToken}`
+              }
+            }
+          );
+
+          // Create orders only after successful payment
+          for (const item of cart) {
+            await axios.post(
+              "http://localhost:5900/api/orders",
+              {
+                name: name.trim(),
+                food: item.name,
+                quantity: item.quantity,
+                price: item.price * item.quantity,
+                userId: user.id
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${savedToken}`
+                }
+              }
+            );
+          }
+
+          alert("Payment successful! Order placed successfully! 🎉");
+
+          localStorage.removeItem("foodnest-cart");
+          window.dispatchEvent(new Event("cartUpdated"));
+          navigate("/orders");
+
+        } catch (err) {
+          console.error(err);
+          alert("Payment verification failed");
+        }
+      },
+
+      prefill: {
+        name: name.trim(),
+        contact: phone.trim()
+      },
+
+      theme: {
+        color: "#f97316"
+      }
+    };
+
+    const razorpay = new window.Razorpay(options);
+
+    razorpay.open();
+
+  } catch (err) {
+    console.error(err);
+
+    if (err.response?.data?.message) {
+      alert(err.response.data.message);
+    } else {
+      alert("Payment failed");
+    }
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-12">

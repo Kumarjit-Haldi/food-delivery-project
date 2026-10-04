@@ -1,20 +1,21 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const Register = () => {
+const VerifyOTP = () => {
+  const location = useLocation();
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const email = location.state?.email || "";
+
+  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
 
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      alert("Please fill all fields");
+    if (!otp.trim()) {
+      alert("Please enter the OTP");
       return;
     }
 
@@ -22,38 +23,33 @@ const Register = () => {
       setLoading(true);
 
       const response = await axios.post(
-        "http://localhost:5900/api/auth/register",
+        "http://localhost:5900/api/auth/verify-otp",
         {
-          name: name.trim(),
-          email: email.trim(),
-          password: password,
+          email: email,
+          otp: otp.trim(),
         }
       );
 
       if (
         response.data.message ===
-        "Registration successful. Please verify your email."
+        "Email verified successfully"
       ) {
-        alert(
-      "Registration successful! Please check your Gmail for the 6-digit OTP."
-        );
+        alert("Email verified successfully!");
 
-       navigate("/verify-otp", {
-        state: {
-         email: email.trim()
-           }
-          });
+        navigate("/login");
       } else {
         alert(response.data.message);
       }
+
     } catch (err) {
       console.error(err);
 
       if (err.response?.data?.message) {
         alert(err.response.data.message);
       } else {
-        alert("Registration failed");
+        alert("OTP verification failed");
       }
+
     } finally {
       setLoading(false);
     }
@@ -66,38 +62,25 @@ const Register = () => {
 
         {/* Logo */}
         <div className="text-center mb-8">
+
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-orange-500 text-white text-3xl shadow-xl shadow-orange-200 mb-4">
-            🍔
+            🔐
           </div>
 
           <h1 className="text-3xl font-extrabold text-gray-900">
-            Create Account
+            Verify Your Email
           </h1>
 
           <p className="text-gray-500 mt-2">
-            Join FoodNest and discover better food
+            Enter the 6-digit OTP sent to your Gmail
           </p>
+
         </div>
 
-        {/* Register Card */}
+        {/* Card */}
         <div className="bg-white rounded-3xl shadow-2xl shadow-orange-100 border border-gray-100 p-8">
 
-          <form onSubmit={handleRegister} className="space-y-5">
-
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Full Name
-              </label>
-
-              <input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3.5 outline-none transition-all focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-              />
-            </div>
+          <form onSubmit={handleVerify} className="space-y-5">
 
             {/* Email */}
             <div>
@@ -107,48 +90,50 @@ const Register = () => {
 
               <input
                 type="email"
-                placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3.5 outline-none transition-all focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                readOnly
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-gray-600 outline-none"
               />
             </div>
 
-            {/* Password */}
+            {/* OTP */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
+                Verification OTP
               </label>
 
               <input
-                type="password"
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3.5 outline-none transition-all focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                type="text"
+                inputMode="numeric"
+                maxLength="6"
+                placeholder="Enter 6-digit OTP"
+                value={otp}
+                onChange={(e) =>
+                  setOtp(e.target.value.replace(/\D/g, ""))
+                }
+                className="w-full rounded-xl border border-gray-200 px-4 py-3.5 text-center text-2xl font-bold tracking-[0.5em] outline-none transition-all focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
               />
             </div>
 
-            {/* Register Button */}
+            {/* Verify Button */}
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-xl bg-orange-500 py-3.5 font-bold text-white shadow-lg shadow-orange-200 transition-all duration-300 hover:bg-orange-600 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating Account..." : "Create Account"}
+              {loading ? "Verifying..." : "Verify OTP"}
             </button>
 
           </form>
 
-          {/* Login */}
           <p className="text-center text-sm text-gray-500 mt-6">
-            Already have an account?{" "}
-            <Link
-              to="/login"
+            Already verified?{" "}
+            <button
+              onClick={() => navigate("/login")}
               className="font-bold text-orange-500 hover:text-orange-600"
             >
               Login
-            </Link>
+            </button>
           </p>
 
         </div>
@@ -162,4 +147,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default VerifyOTP;

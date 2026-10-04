@@ -25,8 +25,16 @@ const ViewFood = () => {
   // Delete Food
   const deleteFood = async (id) => {
     try {
-      await axios.delete(`http://localhost:5900/api/foods/${id}`);
+      const token = localStorage.getItem("foodnest-token");
 
+        await axios.delete(
+       `http://localhost:5900/api/foods/${id}`,
+           {
+         headers: {
+      Authorization: `Bearer ${token}`,
+       },
+     }
+         );
       alert("Food deleted successfully");
 
       getFoods();
@@ -46,15 +54,22 @@ const ViewFood = () => {
     e.preventDefault();
 
     try {
-      await axios.put(
-        `http://localhost:5900/api/foods/${editingFood._id}`,
-        {
-          name: editingFood.name.trim(),
-          price: Number(editingFood.price),
-          description: editingFood.description.trim(),
-          image: editingFood.image.trim(),
-        }
-      );
+      const token = localStorage.getItem("foodnest-token");
+
+await axios.put(
+  `http://localhost:5900/api/foods/${editingFood._id}`,
+  {
+    name: editingFood.name.trim(),
+    price: Number(editingFood.price),
+    description: editingFood.description.trim(),
+    image: editingFood.image.trim(),
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
       alert("Food updated successfully");
 

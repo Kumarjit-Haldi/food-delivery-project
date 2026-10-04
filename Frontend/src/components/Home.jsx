@@ -1,6 +1,18 @@
-import React from 'react'
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+const navigate = useNavigate();
+
+const handleHomeSearch = () => {
+  if (!searchTerm.trim()) {
+    navigate("/search");
+    return;
+  }
+
+  navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`);
+};
   return <>
 
     {/* HERO SECTION */}
@@ -155,18 +167,33 @@ const Home = () => {
             <div className="max-w-2xl mx-auto mt-7 flex flex-col sm:flex-row gap-3">
 
               <div className="flex-1 flex items-center gap-3 bg-white/10 border border-white/10 rounded-xl px-5 py-4">
-                <span className="text-xl">🔍</span>
-                <span className="text-gray-500">
-                  Search burgers, pizza, biryani...
-                </span>
-              </div>
 
-              <a
-                href="/search"
-                className="px-7 py-4 rounded-xl bg-orange-500 font-bold hover:bg-orange-600 hover:scale-105 transition-all duration-300"
-              >
-                Search
-              </a>
+  <span className="text-xl">🔍</span>
+
+  <input
+    type="text"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        handleHomeSearch();
+      }
+    }}
+    placeholder="Search burgers, pizza, biryani..."
+    className="w-full bg-transparent outline-none text-white placeholder-gray-500"
+  />
+
+</div>
+
+<button
+  type="button"
+  onClick={handleHomeSearch}
+  className="px-7 py-4 rounded-xl bg-orange-500 font-bold hover:bg-orange-600 hover:scale-105 transition-all duration-300"
+>
+  Search
+</button>
+
+          
 
             </div>
 
@@ -379,10 +406,10 @@ const Home = () => {
             </p>
 
             <a
-              href="/search"
+              href="/ai"
               className="inline-block mt-8 px-7 py-4 rounded-xl bg-orange-500 font-bold hover:bg-orange-600 hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-500/20 transition-all duration-300"
             >
-              Discover Food →
+              Ask FoodNest AI  →
             </a>
 
           </div>

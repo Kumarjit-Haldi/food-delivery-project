@@ -56,48 +56,32 @@ router.post("/register", async (req, res) => {
       password: hashedpassword
     });
 
-    // Verification JWT
-    const verification = jwt.sign(
-      {
-        id: newuser._id
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h"
-      }
-    );
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Verification link
-    const verificationLink =
-      `http://localhost:5900/api/auth/verify/${verification}`;
+     newuser.verificationotp = otp;
+     newuser.verificationotpexpires = new Date(Date.now() + 10 * 60 * 1000);
+
+     await newuser.save();
 
     // Send email
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: newuser.email,
-      subject: "Verify your FoodNest Email",
-      html: `
-        <h2>Welcome to FoodNest!</h2>
+   await transporter.sendMail({
+  from: process.env.GMAIL_USER,
+  to: newuser.email,
+  subject: "Your FoodNest Verification OTP",
+  html: `
+    <h2>Welcome to FoodNest!</h2>
 
-        <p>Hello ${newuser.name},</p>
+    <p>Hello ${newuser.name},</p>
 
-        <p>Please click the button below to verify your email:</p>
+    <p>Your FoodNest verification OTP is:</p>
 
-        <a href="${verificationLink}"
-           style="
-           display:inline-block;
-           padding:12px 20px;
-           background:#f97316;
-           color:white;
-           text-decoration:none;
-           border-radius:8px;
-           ">
-           Verify Email
-        </a>
+    <h1 style="color:#f97316; letter-spacing:8px;">
+      ${otp}
+    </h1>
 
-        <p>This verification link will expire in 10 minutes.</p>
-      `
-    });
+    <p>This OTP will expire in 10 minutes.</p>
+  `
+});
 
     res.json({
       message: "Registration successful. Please verify your email."
@@ -114,53 +98,73 @@ router.post("/register", async (req, res) => {
 });
 
 
+
 // ==========================
-// VERIFY EMAIL
+// VERIFY OTP
 // ==========================
 
-router.get("/verify/:token", async (req, res) => {
-
+router.post("/verify-otp", async (req, res) => {
   try {
+    const { email, otp } = req.body;
 
-    const token = req.params.token;
+    if (!email || !otp) {
+      return res.json({
+        message: "Email and OTP are required"
+      });
+    }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    // Find user
-    const user = await User.findById(decoded.id);
+    const user = await User.findOne({
+      email: email.toLowerCase().trim()
+    });
 
     if (!user) {
-      return res.send("<h2>User not found</h2>");
+      return res.json({
+        message: "User not found"
+      });
     }
 
-    // Already verified
     if (user.isverified) {
-      return res.send("<h2>Email already verified</h2>");
+      return res.json({
+        message: "Email already verified"
+      });
     }
 
-    // Verify user
+    if (
+      !user.verificationotp ||
+      user.verificationotp !== otp
+    ) {
+      return res.json({
+        message: "Invalid OTP"
+      });
+    }
+
+    if (
+      !user.verificationotpexpires ||
+      user.verificationotpexpires < new Date()
+    ) {
+      return res.json({
+        message: "OTP expired"
+      });
+    }
+
     user.isverified = true;
+    user.verificationotp = undefined;
+    user.verificationotpexpires = undefined;
 
     await user.save();
 
-    res.send(`
-      <h2>Email verified successfully ✅</h2>
-      <p>You can now login to FoodNest.</p>
-    `);
+    res.json({
+      message: "Email verified successfully"
+    });
 
   } catch (err) {
-
     console.error(err);
 
-    res.status(400).send(`
-      <h2>Verification link is invalid or expired ❌</h2>
-    `);
+    res.status(500).json({
+      message: "OTP verification failed"
+    });
   }
 });
-
 
 // ==========================
 // LOGIN

@@ -2,10 +2,11 @@ const express = require("express");
 const router = express.Router();
 
 const food = require("../models/food");
-
+const authmiddleware = require("../middleware/authmiddleware");
+const adminmiddleware = require("../middleware/adminmiddleware");
 
 // create food
-router.post('/', async(req,res)=>{
+router.post('/', authmiddleware, adminmiddleware,async(req,res)=>{
   const foodi = await food.create(req.body);
 
   res.json(foodi);
@@ -29,7 +30,7 @@ router.get('/:id', async(req,res)=>{
 
 
 // update food
-router.put('/:id', async(req,res)=>{
+router.put('/:id', authmiddleware, adminmiddleware,async(req,res)=>{
   const foodi = await food.findByIdAndUpdate(
     req.params.id,
     req.body,
@@ -41,7 +42,7 @@ router.put('/:id', async(req,res)=>{
 
 
 // delete food
-router.delete('/:id', async(req,res)=>{
+router.delete('/:id',authmiddleware, adminmiddleware, async(req,res)=>{
   await food.findByIdAndDelete(req.params.id);
 
   res.json({message:"food deleted successfully"});
