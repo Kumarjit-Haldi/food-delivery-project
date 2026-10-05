@@ -1,14 +1,28 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [darkMode, setDarkMode] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-
+  const [notificationCount, setNotificationCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
 
+  useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}, [darkMode]);
+
+useEffect(() => {
+  console.log("DARK MODE:", darkMode);
+  console.log("HTML CLASS:", document.documentElement.className);
+}, [darkMode]);
   // ---------------- CART COUNT ----------------
   const updateCartCount = () => {
     const savedCart = localStorage.getItem("foodnest-cart");
@@ -37,10 +51,40 @@ const Navbar = () => {
       setCurrentUser(null);
     }
   };
+  // ---------------- NOTIFICATION COUNT ----------------
+const updateNotificationCount = async () => {
+  try {
+    const token = localStorage.getItem("foodnest-token");
+
+    if (!token) {
+      setNotificationCount(0);
+      return;
+    }
+
+    const response = await axios.get(
+      "http://localhost:5900/api/notifications",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const unreadCount = response.data.filter(
+      (item) => !item.isRead
+    ).length;
+
+    setNotificationCount(unreadCount);
+
+  } catch (err) {
+    console.error("Failed to fetch notification count:", err);
+  }
+};
 
   useEffect(() => {
     updateCartCount();
     updateUser();
+    updateNotificationCount();
 
     window.addEventListener("cartUpdated", updateCartCount);
 
@@ -49,16 +93,27 @@ const Navbar = () => {
     };
   }, []);
 
-  // URL change হলে user information আবার check করবে
+  
   useEffect(() => {
     updateUser();
+     updateNotificationCount();
   }, [location.pathname]);
+
+   useEffect(() => {
+   const interval = setInterval(() => {
+    updateNotificationCount();
+   }, 2000);
+
+   return () => clearInterval(interval); 
+   }, []);
 
   // ---------------- LOGOUT ----------------
   const handleLogout = () => {
     localStorage.removeItem("foodnest-token");
     localStorage.removeItem("foodnest-user");
-
+    localStorage.removeItem("foodnest-cart");
+    window.dispatchEvent(new Event("cartUpdated"));
+    
     setCurrentUser(null);
     setIsOpen(false);
 
@@ -71,6 +126,7 @@ const Navbar = () => {
     { name: "Search", path: "/search" },
     { name: "FoodNest AI", path: "/ai" },
     { name: "Orders", path: "/orders" },
+    { name: "Notifications", path: "/notifications" },
   ];
 
   const navLinkStyle = ({ isActive }) =>
@@ -137,11 +193,31 @@ const Navbar = () => {
               className={navLinkStyle}
             >
               {item.name}
+              {item.name === "Notifications" && notificationCount > 0 && (
+             <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+             {notificationCount}
+            </span>
+               )}
 
               <span className="absolute bottom-0 left-3 h-[2px] w-0 rounded-full bg-orange-500 transition-all duration-300 group-hover:w-[calc(100%-24px)]" />
             </NavLink>
           ))}
+          <button
+  onClick={() => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
 
+    if (newMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }}
+            className="rounded-xl bg-gray-100 px-3 py-2 text-lg transition-all duration-300 hover:bg-orange-50"
+              title="Toggle Dark Mode"
+               >
+             {darkMode ? "☀️" : "🌙"}
+              </button>
           {/* Cart */}
           <NavLink
             to="/cart"
@@ -293,6 +369,12 @@ const Navbar = () => {
               }
             >
               {item.name}
+
+              {item.name === "Notifications" && notificationCount > 0 && (
+             <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              {notificationCount}
+            </span>
+               )}
             </NavLink>
           ))}
 

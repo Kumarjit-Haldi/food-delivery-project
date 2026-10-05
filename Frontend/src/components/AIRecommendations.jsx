@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import { useNavigate } from "react-router-dom";
 const AIRecommendations = () => {
+  const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -44,6 +45,7 @@ const AIRecommendations = () => {
     localStorage.setItem("foodnest-cart", JSON.stringify(cart));
 
     window.dispatchEvent(new Event("cartUpdated"));
+    navigate("/cart");
   };
 
   // ---------------- FIND RECOMMENDED FOODS ----------------
@@ -121,7 +123,7 @@ const AIRecommendations = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-orange-50 via-white to-red-50 px-4 py-10">
+      <div className="ai-page min-h-[calc(100vh-80px)] bg-gradient-to-br from-orange-50 via-white to-red-50 px-4 py-10">
       <div className="mx-auto max-w-4xl">
 
         {/* Header */}
@@ -253,12 +255,15 @@ const AIRecommendations = () => {
 
                             {/* Add To Cart */}
                             <button
-                              onClick={() => addToCart(food)}
-                              className="rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-300 hover:bg-orange-600 hover:shadow-md"
-                            >
-                              Add to Cart
-                            </button>
-
+                       type="button"
+                  onClick={(e) => {
+                     e.stopPropagation();
+                        addToCart(food);
+                        }}
+              className="rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-300 hover:bg-orange-600 hover:shadow-md"
+               >
+               Add to Cart
+              </button>
                           </div>
                         ))}
                       </div>

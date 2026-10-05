@@ -1,6 +1,51 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { io } from "socket.io-client";
 
+const socket = io("http://localhost:5900");
+
+let watchId = null;
+
+const getCurrentLocation = () => {
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by this browser.");
+    return;
+  }
+
+  watchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      console.log("Live Latitude:", latitude);
+      console.log("Live Longitude:", longitude);
+        
+      socket.emit("adminLocationUpdate", {
+        latitude,
+        longitude
+      });
+    },
+    (error) => {
+      console.error(error);
+      alert("Unable to get your live location.");
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 10000
+    }
+  );
+
+  alert("Live location tracking started!");
+};
+const stopLiveLocation = () => {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    socket.emit("deliveryTrackingStopped");
+    alert("Live location tracking stopped!");
+  }
+};
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +96,16 @@ const response = await axios.get(
         order._id === id ? response.data : order
       )
     );
+    console.log("ADMIN EMITTING STATUS:", id, newStatus);
 
+        socket.emit("orderStatusUpdated", {
+      orderId: id,
+     status: newStatus
+    });
+   socket.emit("orderStatusUpdated", {
+  orderId: id,
+  status: newStatus
+  });
     alert("Order status updated successfully");
   } catch (err) {
     console.error("UPDATE STATUS ERROR:", err);
@@ -110,6 +164,18 @@ const response = await axios.get(
         <p className="mt-3 text-gray-400">
           Manage customer orders from one place.
         </p>
+        <button
+          onClick={getCurrentLocation}
+          className="mt-5 rounded-xl bg-orange-500 px-5 py-3 font-bold text-white transition-all hover:bg-orange-600"
+          >
+         📍 Get My Location
+       </button>
+       <button
+  onClick={stopLiveLocation}
+  className="mt-3 ml-3 rounded-xl bg-red-500 px-5 py-3 font-bold text-white transition-all hover:bg-red-600"
+>
+  🛑 Stop Live Location
+</button>
       </div>
 
       {/* Loading */}

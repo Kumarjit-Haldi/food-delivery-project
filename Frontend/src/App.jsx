@@ -23,6 +23,7 @@ import AdminOrders from "./components/AdminOrders";
 import AdminRoute from "./components/AdminRoute";
 import VerifyOTP from "./components/VerifyOTP";
 import AIRecommendations from "./components/AIRecommendations";
+import Notification from "./components/Notification";
 
 
 const Layout = () => {
@@ -53,6 +54,7 @@ const Layout = () => {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/ai" element={<AIRecommendations />} />
+        <Route path="/notifications" element={<Notification />} />
         {/* Protected Admin Routes */}
         <Route
           path="/admin"

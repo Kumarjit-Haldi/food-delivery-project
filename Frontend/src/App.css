@@ -182,3 +182,177 @@
     border-right-color: var(--border);
   }
 }
+
+
+
+
+/*FOODNESTDARKMODE */
+.dark body{
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.dark nav {
+  background-color: rgba(17, 24, 39, 0.95) !important;
+  border-color: #374151 !important;
+}
+
+.dark nav h1 {
+  color: #f9fafb !important;
+}
+
+.dark nav a {
+  color: #d1d5db;
+}
+
+.dark nav a:hover {
+  color: #fb923c;
+}
+
+.dark main,
+.dark section {
+  background-color: #111827;
+}
+
+.dark .bg-white {
+  background-color: #1f2937 !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #111827 !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+.dark .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+.dark .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+.dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.dark .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+html.dark {
+  background: #111827 !important;
+}
+
+html.dark body {
+  background: #111827 !important;
+  color: white !important;
+}
+
+/* ORDERS PAGE DARK MODE */
+
+html.dark .orders-page {
+  background: #111827 !important;
+}
+
+html.dark .orders-page .bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark .orders-page .bg-gray-50 {
+  background-color: #374151 !important;
+}
+
+html.dark .orders-page .bg-orange-50 {
+  background-color: #3b2a1a !important;
+}
+
+html.dark .orders-page .bg-orange-100 {
+  background-color: #4a2d16 !important;
+}
+
+html.dark .orders-page .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+html.dark .orders-page .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+html.dark .orders-page .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+html.dark .orders-page .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+html.dark .orders-page .border-gray-100 {
+  border-color: #374151 !important;
+}
+
+html.dark .orders-page .bg-gray-200 {
+  background-color: #4b5563 !important;
+}
+
+/* FOODNEST AI DARK MODE */
+
+html.dark .ai-page {
+  background: #111827 !important;
+}
+
+html.dark .ai-page .bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark .ai-page .bg-gray-50 {
+  background-color: #374151 !important;
+}
+
+html.dark .ai-page .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+html.dark .ai-page .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+html.dark .ai-page .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .ai-page .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+html.dark .ai-page .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+html.dark .ai-page .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+html.dark .ai-page .border-gray-100,
+html.dark .ai-page .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+html.dark .ai-page .border-orange-100 {
+  border-color: #7c3f16 !important;
+}
+
+html.dark .ai-page .bg-orange-50 {
+  background-color: #3b2a1a !important;
+}

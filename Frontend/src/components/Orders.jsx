@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { io } from "socket.io-client";
+import { GoogleMap, LoadScript, MarkerF } from "@react-google-maps/api";
+const socket = io("http://localhost:5900");
+
 
 const Orders = () => {
+  const mapContainerStyle = {
+  width: "100%",
+  height: "400px"
+};
+  
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
-
+  const [deliveryLocation, setDeliveryLocation] = useState(null);
   useEffect(() => {
   const getOrders = async () => {
     try {
@@ -43,8 +52,44 @@ const Orders = () => {
 
   getOrders();
 }, []);
+//useeffect
+      useEffect(() => {
+  const handleOrderStatusUpdate = (data) => {
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order._id === data.orderId
+          ? { ...order, status: data.status }
+          : order
+      )
+    );
 
-      
+    setSelectedOrder((prevOrder) =>
+      prevOrder && prevOrder._id === data.orderId
+        ? { ...prevOrder, status: data.status }
+        : prevOrder
+    );
+  };
+
+  socket.on("orderStatusUpdated", handleOrderStatusUpdate);
+  socket.on("deliveryLocationUpdated", (location) => {
+  console.log("Delivery location received:", location);
+  setDeliveryLocation(location);
+   });
+
+
+   socket.on("deliveryTrackingStopped", () => {
+  console.log("Delivery tracking stopped");
+  setDeliveryLocation(null);
+   });
+
+
+
+  return () => {
+    socket.off("orderStatusUpdated", handleOrderStatusUpdate);
+    socket.off("deliveryLocationUpdated");
+    socket.off("deliveryTrackingStopped");
+  };
+}, []);
 
   if (loading) {
     return (
@@ -61,8 +106,7 @@ const Orders = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 px-5 py-12">
-
+   <div className="orders-page min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 px-5 py-12">
       {/* Header */}
       <div className="mx-auto mb-10 max-w-6xl text-center">
         <p className="mb-2 text-sm font-bold uppercase tracking-widest text-orange-500">
@@ -77,7 +121,39 @@ const Orders = () => {
           Track and view all your FoodNest orders
         </p>
       </div>
+{deliveryLocation && (
+  <div className="mx-auto mb-8 max-w-6xl overflow-hidden rounded-3xl bg-white shadow-xl">
+    <div className="p-5">
+      <h2 className="mb-2 text-2xl font-bold text-gray-900">
+        📍 Live Delivery Tracking
+      </h2>
 
+      <p className="mb-4 text-sm text-gray-500">
+        Delivery partner's current location
+      </p>
+
+      <LoadScript
+        googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+      >
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          center={{
+            lat: deliveryLocation.latitude,
+            lng: deliveryLocation.longitude
+          }}
+          zoom={15}
+        >
+          <MarkerF
+            position={{
+              lat: deliveryLocation.latitude,
+              lng: deliveryLocation.longitude
+            }}
+          />
+        </GoogleMap>
+      </LoadScript>
+    </div>
+  </div>
+)}
       {/* Empty */}
       {orders.length === 0 ? (
         <div className="mx-auto max-w-xl rounded-3xl bg-white p-10 text-center shadow-xl">

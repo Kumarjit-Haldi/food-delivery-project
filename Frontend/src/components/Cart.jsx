@@ -15,6 +15,18 @@ const Cart = () => {
   useEffect(() => {
     localStorage.setItem("foodnest-cart", JSON.stringify(cart));
   }, [cart]);
+  useEffect(() => {
+  const handleCartUpdate = () => {
+    const savedCart = localStorage.getItem("foodnest-cart");
+    setCart(savedCart ? JSON.parse(savedCart) : []);
+  };
+
+  window.addEventListener("cartUpdated", handleCartUpdate);
+
+  return () => {
+    window.removeEventListener("cartUpdated", handleCartUpdate);
+  };
+}, []);
 
   // Increase quantity
   const increaseQuantity = (id) => {
